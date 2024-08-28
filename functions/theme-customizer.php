@@ -260,25 +260,39 @@ function customizer_register($wp_customize)
         'title' => __('Registration Form', 'sequel'),
         'priority' => 34,
     ));
-    $wp_customize->add_setting('registration_form_code', array(
-        'default' => 'Registration Form',
-        'sanitize_callback' => 'wp_kses_post',
-        'transport' => 'refresh',
-    ));
-    $wp_customize->add_control('registration_form_code_control', array(
-        'label' => __('Registration Form Code', 'sequel'),
-        'section' => 'registration_form_section',
-        'settings' => 'registration_form_code',
-        'type' => 'textarea',
-    ));
+
+	$wp_customize->add_setting('registration_form_code', array(
+		'default' => '',
+		'sanitize_callback' => null, // Disable sanitization
+	));
+
+	$wp_customize->add_control('registration_form_code_control', array(
+		'label' => __('Registration Form Code', 'sequel'),
+		'section' => 'registration_form_section',
+		'settings' => 'registration_form_code',
+		'type' => 'textarea',
+	));
+	$wp_customize->add_section('networking_hub_section', array(
+		'title' => __('Networking Hub', 'sequel'),
+		'priority' => 35,
+	));
+	$wp_customize->add_setting('networking_hub_id', array(
+		'default' => '',
+		'sanitize_callback' => 'sanitize_text_field', 
+	));
+	$wp_customize->add_control('networking_hub_id_control', array(
+		'label' => __('Networking Hub ID', 'sequel'),
+		'section' => 'networking_hub_section',
+		'settings' => 'networking_hub_id',
+		'type' => 'text', 
+	));
     $wp_customize->add_section('tracking_codes_section', array(
         'title' => __('Tracking Codes', 'sequel'),
-        'priority' => 35,
+        'priority' => 36,
     ));
     $wp_customize->add_setting('tracking_codes', array(
         'default' => '',
-        'sanitize_callback' => 'wp_kses_post',
-        'transport' => 'refresh',
+		'sanitize_callback' => null, // Disable sanitization
     ));
     $wp_customize->add_control('tracking_codes_control', array(
         'label' => __('Tracking Codes', 'sequel'),
@@ -287,7 +301,6 @@ function customizer_register($wp_customize)
         'type' => 'textarea',
     ));
 }
-
 
 function customizer_preview_js()
 {

@@ -6,8 +6,7 @@
             </svg>
         </div>
         <div class="title">
-            <h3>Register for</h3>
-            <h2>Innovate & Elevate</h2>
+            <h3>Register</h3>
         </div>
         <div class="form">
             <?php echo get_theme_mod('registration_form_code', ''); ?>

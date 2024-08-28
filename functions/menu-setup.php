@@ -21,21 +21,30 @@ function create_default_menu()
             set_theme_mod('nav_menu_locations', $locations);
         }
 
+        // Get the homepage URL
+        $home_url = home_url('/');
+
         wp_update_nav_menu_item($menu_id, 0, array(
             'menu-item-title' => __('Overview', 'sequel'),
-            'menu-item-url' => '#top',
+            'menu-item-url' => $home_url . '#top',
             'menu-item-status' => 'publish'
         ));
 
         wp_update_nav_menu_item($menu_id, 0, array(
             'menu-item-title' => __('Agenda', 'sequel'),
-            'menu-item-url' => '#agenda',
+            'menu-item-url' => $home_url . '#agenda',
             'menu-item-status' => 'publish'
         ));
 
         wp_update_nav_menu_item($menu_id, 0, array(
             'menu-item-title' => __('Speakers', 'sequel'),
-            'menu-item-url' => '#speakers',
+            'menu-item-url' => $home_url . '#speakers',
+            'menu-item-status' => 'publish'
+        ));
+		
+		wp_update_nav_menu_item($menu_id, 0, array(
+            'menu-item-title' => __('Networking', 'sequel'),
+            'menu-item-url' => $home_url . '/networking',
             'menu-item-status' => 'publish'
         ));
     }
@@ -104,6 +113,26 @@ function remove_nav_menu_container($args = '')
     return $args;
 }
 
+function filter_nav_menu_items($items, $args)
+{
+    $networking_hub_id = get_theme_mod('networking_hub_id');
+
+    // Find and remove the Networking menu item if the hub ID is empty
+    foreach ($items as $key => $item) {
+        if ($item->title === __('Networking', 'sequel')) {
+            if (empty($networking_hub_id)) {
+                unset($items[$key]);
+            }
+        }
+    }
+
+    // Optionally re-index the array if you remove an item
+    $items = array_values($items);
+
+    return $items;
+}
+
 add_action('after_setup_theme', 'menu_setup');
 add_action('after_setup_theme', 'create_default_menu');
 add_filter('wp_nav_menu_args', 'remove_nav_menu_container');
+add_filter('wp_nav_menu_objects', 'filter_nav_menu_items', 10, 2);

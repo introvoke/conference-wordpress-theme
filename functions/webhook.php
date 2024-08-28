@@ -80,10 +80,17 @@ function process_webhook_request($action)
     }
 
     $title = sanitize_text_field($data['details']['eventName']);
+    $timezone = sanitize_text_field($data['details']['timezone']); // Sanitize timezone input
+
     try {
-        $start_date = new DateTime($data['details']['startDate'], new DateTimeZone($data['details']['timezone']));
+        $start_date = DateTime::createFromFormat('m/d/Y, g:i:s A', $data['details']['startDate'], new DateTimeZone('UTC'));
+        $end_date = DateTime::createFromFormat('m/d/Y, g:i:s A', $data['details']['endDate'], new DateTimeZone('UTC'));
+
+        if (!$start_date || !$end_date) {
+            throw new Exception('Invalid date format');
+        }
+
         $start_timestamp = $start_date->getTimestamp();
-        $end_date = new DateTime($data['details']['endDate'], new DateTimeZone($data['details']['timezone']));
         $end_timestamp = $end_date->getTimestamp();
     } catch (Exception $e) {
         status_header(400);
@@ -92,7 +99,10 @@ function process_webhook_request($action)
     }
 
     $thumbnail_url = esc_url_raw($data['details']['bannerUrl']);
-    $description = sanitize_textarea_field($data['details']['description']);
+    
+    // Preserve HTML content by using wp_kses_post or a custom wp_kses call
+    $description = wp_kses_post($data['details']['description']); // Allows safe HTML tags
+    
     $short_description = wp_strip_all_tags($description);
     $short_description = substr($short_description, 0, 200) . "...";
 
@@ -123,8 +133,30 @@ function process_webhook_request($action)
     update_post_meta($post_id, '_session_end_date', $end_timestamp);
     update_post_meta($post_id, '_session_thumbnail_url', $thumbnail_url);
     update_post_meta($post_id, '_session_event_id', $event_id);
-    update_post_meta($post_id, '_session_description', $description);
+    update_post_meta($post_id, '_session_description', $description); // Save HTML description
     update_post_meta($post_id, '_session_short_description', $short_description);
+    update_post_meta($post_id, '_session_timezone', $timezone); // Save the timezone
+    update_post_meta($post_id, '_session_payload', wp_json_encode($data)); // Save the JSON payload
+	
+	// Send POST request to external API
+    $post_url = get_permalink($post_id);
+    $payload = json_encode(array(
+        'postId' => $event_id,
+        'postUrl' => $post_url
+    ));
+
+    $response = wp_remote_post("https://api.introvoke.com/api/v3/events/{$event_id}/wpcms", array(
+        'method'    => 'POST',
+        'headers'   => array('Content-Type' => 'application/json'),
+        'body'      => $payload,
+        'timeout'   => 45
+    ));
+
+    if (is_wp_error($response)) {
+        status_header(500);
+        echo 'Error sending data to external API';
+        exit;
+    }
 
     status_header(200);
     echo 'Session processed successfully';

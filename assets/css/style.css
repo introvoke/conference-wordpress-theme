@@ -484,9 +484,9 @@ section.agenda .item .cta {
     align-items: center;
     justify-content: center;
     padding: 12px 24px;
-    color: var(--hero-text-color);
+    color: var(--global-text-color);
     cursor: pointer;
-    border: solid 1.5px var(--hero-text-color);
+    border: solid 1.5px var(--global-text-color);
     border-radius: var(--global-button-radius);
     font-size: 14px;
     font-weight: 700;
@@ -857,9 +857,9 @@ section.session-next .cta {
     align-items: center;
     justify-content: center;
     padding: 12px 24px;
-    color: var(--hero-text-color);
+    color: var(--global-text-color);
     cursor: pointer;
-    border: solid 1.5px var(--hero-text-color);
+    border: solid 1.5px var(--global-text-color);
     border-radius: var(--global-button-radius);
     font-size: 14px;
     font-weight: 700;

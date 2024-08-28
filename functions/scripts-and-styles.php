@@ -10,8 +10,8 @@ add_action('wp_enqueue_scripts', 'theme_styles');
 
 function theme_scripts(): void
 {
-    wp_enqueue_script('intersect', get_template_directory_uri() . '/assets/js/intersect.min.js', array(), '1.0.0', false);
-    wp_enqueue_script('alpine', get_template_directory_uri() . '/assets/js/alpinejs.min.js', array(), '3.14.1', false);
+    wp_enqueue_script('alpine', 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js', array(), '3.14.1', false);
+	wp_enqueue_script('intersect', 'https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js', array(), '3.14.1', false);
     wp_enqueue_script('app', get_template_directory_uri() . '/assets/js/app.js', array(), '1.0.0', true);
 }
 

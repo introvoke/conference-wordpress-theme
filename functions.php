@@ -3,8 +3,8 @@
 include('functions/scripts-and-styles.php');
 include('functions/theme-customizer.php');
 include('functions/custom-post-types.php');
+include('functions/add-pages.php');
 include('functions/menu-setup.php');
-include('functions/add-homepage.php');
 include('functions/webhook.php');
 
 // Tweaks

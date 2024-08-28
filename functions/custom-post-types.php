@@ -60,6 +60,8 @@ function render_session_meta_box($post)
     $short_description = get_post_meta($post->ID, '_session_short_description', true);
     $description = get_post_meta($post->ID, '_session_description', true);
     $speaker_ids = get_post_meta($post->ID, '_session_speaker_ids', true);
+    $timezone = get_post_meta($post->ID, '_session_timezone', true);
+    $payload = get_post_meta($post->ID, '_session_payload', true);
 
     wp_nonce_field('session_nonce_action', 'session_nonce');
 
@@ -104,7 +106,19 @@ function render_session_meta_box($post)
         </p>
         <p>
             <label for="session_description">Description:</label><br/>
-            <textarea id="session_description" name="session_description" rows="10"><?php echo esc_textarea($description); ?></textarea>
+            <?php
+            wp_editor(
+                $description,
+                'session_description',
+                array(
+                    'textarea_name' => 'session_description',
+                    'media_buttons' => true,
+                    'textarea_rows' => 10,
+                    'teeny' => false,
+                    'quicktags' => true,
+                )
+            );
+            ?>
             <em>This description will be shown on the session page.</em>
         </p>
         <p>
@@ -122,23 +136,89 @@ function render_session_meta_box($post)
         <div class="warning-box">
             This data automatically syncs with the event details from Sequel.io.
         </div>
+
         <p>
-            <label for="session_start_date">Start Date and Time:</label><br/>
-            <input type="text" id="session_start_date" name="session_start_date" value="<?php echo esc_attr($start_date); ?>" disabled="disabled"/>
-            <em><?php echo date('l, F d Y, h:i A', $start_date); ?></em>
+            <label for="session_timezone"><strong>Timezone:</strong></label><br/>
+            <span><?php echo esc_attr($timezone); ?></span>
+        </p>
+
+        <p>
+            <label for="session_start_date"><strong>Start Date:</strong></label><br/>
+            <input type="hidden" id="session_start_date" name="session_start_date" value="<?php echo esc_attr($start_date); ?>"/>
+            <span>
+				<?php
+                if (is_numeric($start_date)) {
+                    $timestamp = $start_date;
+                } else {
+                    $timestamp = strtotime($start_date);
+                }
+
+                if ($timestamp !== false) {
+                    $timezone = get_post_meta($post->ID, '_session_timezone', true);
+                    $timezone = $timezone ? $timezone : 'UTC'; // Default to UTC if no timezone is set
+
+                    try {
+                        $datetime = new DateTime();
+                        $datetime->setTimestamp($timestamp);
+                        $datetime->setTimezone(new DateTimeZone($timezone));
+
+                        echo $datetime->format('l, F d Y, h:i A');
+                        echo " (".$timezone.")";
+                    } catch (Exception $e) {
+                        echo 'Invalid timezone';
+                    }
+                } else {
+                    echo 'Warning: No start date';
+                }
+                ?>
+			</span>
+        </p>
+
+        <p>
+            <label for="session_start_date"><strong>Start Date:</strong></label><br/>
+            <input type="hidden" id="session_end_date" name="session_end_date" value="<?php echo esc_attr($end_date); ?>"/>
+            <span>
+				<?php
+                if (is_numeric($end_date)) {
+                    $timestamp = $end_date;
+                } else {
+                    $timestamp = strtotime($end_date);
+                }
+
+                if ($timestamp !== false) {
+                    $timezone = get_post_meta($post->ID, '_session_timezone', true);
+                    $timezone = $timezone ? $timezone : 'UTC'; // Default to UTC if no timezone is set
+
+                    try {
+                        $datetime = new DateTime();
+                        $datetime->setTimestamp($timestamp);
+                        $datetime->setTimezone(new DateTimeZone($timezone));
+
+                        echo $datetime->format('l, F d Y, h:i A');
+                        echo " (".$timezone.")";
+                    } catch (Exception $e) {
+                        echo 'Invalid timezone';
+                    }
+                } else {
+                    echo 'Warning: No start date';
+                }
+                ?>
+			</span>
+        </p>
+
+        <p>
+            <label for="session_thumbnail_url"><strong>Thumbnail URL:</strong></label><br/>
+            <input type="hidden" id="session_thumbnail_url" name="session_thumbnail_url" value="<?php echo esc_attr($thumbnail_url); ?>"/>
+            <span><?php echo esc_attr($thumbnail_url); ?></span>
         </p>
         <p>
-            <label for="session_end_date">End Date and Time:</label><br/>
-            <input type="text" id="session_end_date" name="session_end_date" value="<?php echo esc_attr($end_date); ?>" disabled="disabled"/>
-            <em><?php echo date('l, F d Y, h:i A', $end_date); ?></em>
+            <label for="session_event_id"><strong>Event ID:</strong></label><br/>
+            <input type="hidden" id="session_event_id" name="session_event_id" value="<?php echo esc_attr($event_id); ?>"/>
+            <span><?php echo esc_attr($event_id); ?></span>
         </p>
         <p>
-            <label for="session_thumbnail_url">Thumbnail URL:</label><br/>
-            <input type="text" id="session_thumbnail_url" name="session_thumbnail_url" value="<?php echo esc_attr($thumbnail_url); ?>" disabled="disabled"/>
-        </p>
-        <p>
-            <label for="session_event_id">Event ID:</label><br/>
-            <input type="text" id="session_event_id" name="session_event_id" value="<?php echo esc_attr($event_id); ?>" disabled="disabled"/>
+            <label for="session_payload"><strong>Payload:</strong></label><br/>
+            <textarea id="session_payload" name="session_payload" rows="15" style="width: 100%;"><?php echo esc_textarea($payload); ?></textarea>
         </p>
     </div>
     <?php
@@ -169,7 +249,7 @@ function save_session_meta($post_id)
         update_post_meta($post_id, '_session_event_id', sanitize_text_field($_POST['session_event_id']));
     }
     if (isset($_POST['session_description'])) {
-        update_post_meta($post_id, '_session_description', sanitize_textarea_field($_POST['session_description']));
+        update_post_meta($post_id, '_session_description', wp_kses_post($_POST['session_description']));
     }
     if (isset($_POST['session_short_description'])) {
         update_post_meta($post_id, '_session_short_description', sanitize_textarea_field($_POST['session_short_description']));
@@ -177,6 +257,9 @@ function save_session_meta($post_id)
     if (isset($_POST['session_speaker_ids'])) {
         $speaker_ids = array_map('sanitize_text_field', $_POST['session_speaker_ids']);
         update_post_meta($post_id, '_session_speaker_ids', $speaker_ids);
+    }
+    if (isset($_POST['session_timezone'])) {
+        update_post_meta($post_id, '_session_timezone', sanitize_text_field($_POST['session_timezone']));
     }
 }
 
@@ -198,9 +281,34 @@ function custom_session_column($column, $post_id)
         case 'start_date':
             $start_date = get_post_meta($post_id, '_session_start_date', true);
             $timezone = get_post_meta($post_id, '_session_timezone', true);
+
             if (!empty($start_date)) {
-                $date = date('Y-m-d H:i:s', $start_date);
-                echo $date;
+                if (is_numeric($start_date)) {
+                    $timestamp = $start_date;
+                } else {
+                    $timestamp = strtotime($start_date);
+                }
+
+                if ($timestamp !== false) {
+                    // Use the saved timezone, or default to UTC
+                    $timezone = $timezone ? $timezone : 'UTC';
+
+                    try {
+                        // Create DateTime object with the saved timezone
+                        $datetime = new DateTime();
+                        $datetime->setTimestamp($timestamp);
+                        $datetime->setTimezone(new DateTimeZone($timezone));
+
+                        // Display the date, time, and timezone
+                        echo $datetime->format('l, F d Y, h:i A') . ' (' . esc_html($timezone) . ')';
+                    } catch (Exception $e) {
+                        echo 'Invalid timezone';
+                    }
+                } else {
+                    echo 'Invalid start date';
+                }
+            } else {
+                echo 'No start date available';
             }
             break;
         case 'thumbnail':
